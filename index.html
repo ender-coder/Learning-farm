@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>英文單字學習農場 (Learning Farm)</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #333; }
+        #game-container {
+            /* 確保容器可以擴展到最大寬度 */
+            max-width: 100%; 
+            /* 讓容器居中 */
+            margin: 0 auto; 
+            /* 建議為遊戲畫面留一些空間，例如： */
+            /* width: 800px;  - 這是 Phsaer 的設計寬度 */
+            /* height: 900px; - 這是 Phsaer 的設計高度 */
+            /* 這裡不需要設定絕對寬高，Phaser 會根據 scale 屬性自動處理 Canvas 的尺寸 */
+        }
+        
+        /* 確保 Canvas 元素的寬度可以跟隨父容器變化 */
+        canvas {
+                display: block; /* 移除 Canvas 下方的額外空間 */
+        }
+        
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+</head>
+<body>
+    <div id="statistics-container" style="
+    width: 800px; 
+    margin: 30px auto 10px; 
+    padding: 10px; 
+    background-color: #f8f9fa; 
+    border: 1px solid #dee2e6; 
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-around;
+    font-size: 1.1em;
+	">
+    載入中...
+	</div>
+	
+    <div id="game-container"><div id="word-modal" style="
+    display: none; 
+    position: fixed; 
+    z-index: 1000; 
+    left: 0; 
+    top: 0; 
+    width: 100%; 
+    height: 100%; 
+    overflow: auto; 
+    background-color: rgba(0,0,0,0.8);">
+    
+    <div id="modal-content" style="
+        background-color: #fefefe;
+        margin: 10% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 600px;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        animation-name: animatetop;
+        animation-duration: 0.4s;">
+        
+        <span id="modal-close" style="
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;">&times;</span>
+            
+        <h2>單字學習 / 複習</h2>
+        <div id="word-list-container">
+            </div>
+    </div></div></div>
+
+    <script src="data.js"></script> 
+    
+    <script src="game.js"></script>
+</body>
+</html>
