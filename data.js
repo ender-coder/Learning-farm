@@ -99,6 +99,16 @@ const RAW_WORDS = [
     { word: "condensed", meaning: "adj.簡要的；壓縮的" },
     { word: "endorse", meaning: "v.支持；贊同；背書" },
     { word: "punctually", meaning: "adv.如期的；不延期的" },
+    { word: "rigorous", meaning: "adj.嚴格的" },
+    { word: "meticulous", meaning: "adj.細緻的" },
+    { word: "interpret", meaning: "v.解釋" },
+    { word: "schematic", meaning: "adj.示意的n.示意圖" },
+    { word: "analytical", meaning: "adj.分析的" },
+    { word: "diagnose", meaning: "v.診斷" },
+    { word: "enthusiastic", meaning: "adj.熱情的" },
+    { word: "thrive in", meaning: "在…中茁壯成長" },
+    { word: "strength", meaning: "n.優勢" },
+    { word: "cultivate", meaning: "v.培養" },
     /*{ word: "", meaning: "" },
     { word: "", meaning: "" },
     { word: "", meaning: "" },
@@ -226,3 +236,4 @@ function getTenUnlearnedWords(wordDB) {
     return selection.map(w => w.id);
 
 }
+
