@@ -82,7 +82,7 @@ function createDefaultWordDatabase(rawWords) {
  * 從 localStorage 載入資料，並處理新加入的單字。
  * @returns {object} 包含 wordDB 和 farmState 的物件。
  */
-async function async functi() {
+async function loadGameData() {
     const storedWords = localStorage.getItem(WORD_DB_KEY);
     const storedFarm = localStorage.getItem(FARM_STATE_KEY);
     
@@ -162,6 +162,7 @@ function getTenUnlearnedWords(wordDB) {
     return selection.map(w => w.id);
 
 }
+
 
 
 
