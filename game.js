@@ -47,11 +47,15 @@ function speakWord(text) {
     }
     // 停止目前正在播放的聲音
     window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US'; // 設定為美式英文
-    utterance.rate = 0.8;      // 語速稍慢一點，方便聽清楚
-    window.speechSynthesis.speak(utterance);
+    
+    // 延遲一小段時間再播放，確保 cancel 完全生效 (某些瀏覽器 bug)
+    setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US'; // 設定為美式英文
+        utterance.rate = 0.8; // 語速稍慢一點，方便聽清楚
+        utterance.volume = 1.0; // 確保音量最大
+        window.speechSynthesis.speak(utterance);
+    }, 50);
 }
 
 /**
@@ -133,31 +137,51 @@ function calculatePlotMastery(wordIds) {
  * @param {Array<object>} words - 要學習的單字物件列表。
  */
 function renderLearningPage(words) {
-    // ... (此函數內容不變，只確保點擊開始考試後進入多選題) ...
     const listContainer = document.getElementById('word-list-container');
     const titleElement = document.getElementById('word-modal').querySelector('h2');
     
     titleElement.textContent = "新單字學習 (New Words)";
 
     // 顯示單字列表
-    const listHtml = words.map(wordObj => `
-        <div style="
-            display: flex; 
-            margin-bottom: 10px; 
-            border-bottom: 1px dashed #ccc; 
-            padding-bottom: 5px;
-            align-items: center; /* 垂直居中對齊 */
-        ">
-            <strong style="
-                font-size: 1.1em; 
-                color: #007bff; 
-                width: 150px; /* <--- 英文單字寬度，您可以根據單字最長長度調整 */
-                display: inline-block;
-            ">${wordObj.word}</strong> 
+    const listHtml = words.map(wordObj => {
+        // 處理單字中的單引號，避免 HTML onclick 崩潰
+        const safeWord = wordObj.word.replace(/'/g, "\\'");
+        
+        return `
+            <div style="
+                display: flex; 
+                margin-bottom: 10px; 
+                border-bottom: 1px dashed #ccc; 
+                padding-bottom: 5px;
+                align-items: center; /* 垂直居中對齊 */
+            ">
+                <strong style="
+                    font-size: 1.1em; 
+                    color: #007bff; 
+                    width: 150px; /* <--- 英文單字寬度，您可以根據單字最長長度調整 */
+                    display: inline-block;
+                ">${wordObj.word}</strong> 
             
-            <span style="color: #6c757d;">${wordObj.meaning}</span>
-        </div>
-    `).join('');
+                <button onclick="speakWord('${safeWord}')" style="
+                    background-color: #f0f7ff;
+                    border: 1px solid #007bff;
+                    color: #007bff;
+                    border-radius: 50%; /* 圓形按鈕比較美觀 */
+                    cursor: pointer;
+                    margin-right: 15px;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 2px 8px;
+                    font-size: 1em;
+                ">🔊</button> 
+            
+                <span style="color: #6c757d;">${wordObj.meaning}</span>
+            </div>
+        `;
+    }).join('');
 
     listContainer.innerHTML = listHtml;
     
@@ -190,10 +214,8 @@ function renderLearningPage(words) {
  * @param {Array<object>} words - 要複習的單字物件列表。
  */
 function renderReviewPage(words) {
-    // ... (此函數內容不變，只確保點擊開始複習測驗後進入多選題) ...
     const listContainer = document.getElementById('word-list-container');
     const titleElement = document.getElementById('word-modal').querySelector('h2');
-    
     titleElement.textContent = "單字複習 (Review Page)";
 
     // 篩選出需要測驗的單字 (排除 100% 正確的)
@@ -205,6 +227,9 @@ function renderReviewPage(words) {
 
     // 顯示單字列表和答對率
     const listHtml = words.map(wordObj => {
+        // 處理單字中的單引號，避免 HTML onclick 崩潰
+        const safeWord = wordObj.word.replace(/'/g, "\\'");
+        
         const correct = wordObj.correctCount || 0;
         const total = wordObj.totalAttempts || 0;
         const accuracy = total > 0 ? (correct / total * 100).toFixed(0) : '0';
@@ -239,6 +264,22 @@ function renderReviewPage(words) {
                         width: 150px; /* <--- 關鍵！確保中文從固定位置開始 */
                         display: inline-block; 
                     ">${wordObj.word}</strong> 
+                    
+                    <<button onclick="speakWord('${safeWord}')" style="
+                        background-color: #f0f7ff;
+                        border: 1px solid #007bff;
+                        color: #007bff;
+                        border-radius: 50%; /* 圓形按鈕比較美觀 */
+                        cursor: pointer;
+                        margin-right: 15px;
+                        width: 32px;
+                        height: 32px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1em;
+                    ">🔊</button>
+                    
                     <span style="color: #6c757d;">${wordObj.meaning}</span>
                 </div>
                 
@@ -921,4 +962,5 @@ function update ()
     }
 
 }
+
 
