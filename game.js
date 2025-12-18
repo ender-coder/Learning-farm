@@ -145,7 +145,7 @@ function renderLearningPage(words) {
     // 顯示單字列表
     const listHtml = words.map(wordObj => {
         // 處理單字中的單引號，避免 HTML onclick 崩潰
-        const safeWord = wordObj.word.replace(/'/g, "\\'");
+        const safeWord = wordObj.word.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         
         return `
             <div style="
@@ -171,6 +171,7 @@ function renderLearningPage(words) {
                     margin-right: 15px;
                     width: 32px;
                     height: 32px;
+                    flex-shrink: 0; /* 防止按鈕被擠壓 */
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -228,7 +229,7 @@ function renderReviewPage(words) {
     // 顯示單字列表和答對率
     const listHtml = words.map(wordObj => {
         // 處理單字中的單引號，避免 HTML onclick 崩潰
-        const safeWord = wordObj.word.replace(/'/g, "\\'");
+        const safeWord = wordObj.word.replace(/'/g, "\\'").replace(/"/g, '&quot;');
         
         const correct = wordObj.correctCount || 0;
         const total = wordObj.totalAttempts || 0;
@@ -265,7 +266,7 @@ function renderReviewPage(words) {
                         display: inline-block; 
                     ">${wordObj.word}</strong> 
                     
-                    <<button onclick="speakWord('${safeWord}')" style="
+                    <button onclick="speakWord('${safeWord}')" style="
                         background-color: #f0f7ff;
                         border: 1px solid #007bff;
                         color: #007bff;
@@ -274,6 +275,7 @@ function renderReviewPage(words) {
                         margin-right: 15px;
                         width: 32px;
                         height: 32px;
+                        flex-shrink: 0; /* 防止按鈕被擠壓 */
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -962,5 +964,6 @@ function update ()
     }
 
 }
+
 
 
