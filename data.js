@@ -1,128 +1,13 @@
-// data.js - 優化版：簡化單字輸入
+// data.js - 線上同步版
 
 // -------------------------------------------------------------
-// ⭐️ 核心優化：只需要輸入單字和中文意思即可 ⭐️
+// ⭐️ 核心修改：將網址貼在下面，以後你只要改表格，遊戲就會自動更新 ⭐️
 // -------------------------------------------------------------
-const RAW_WORDS = [
-    { word: "acquisition", meaning: "n.取得" },
-    { word: "admonish", meaning: "v.警告；責備" },
-    { word: "adorn", meaning: "v.裝飾" },
-    { word: "alma mater", meaning: "n.母校" },
-    { word: "altitude", meaning: "n.高度" },
-    { word: "amateur", meaning: "adj.業餘的n.業餘" },
-    { word: "annihilate", meaning: "v.抵銷" },
-    { word: "applaud", meaning: "v.讚譽" },
-    { word: "arrogant", meaning: "adj.傲慢的" },
-    { word: "aviator", meaning: "n.飛行員" },
-    { word: "calcium", meaning: "n.鈣" },
-    { word: "chant", meaning: "v.吟唱" },
-    
-    // ⭐ 優化後，您可以這樣輕鬆擴充資料庫：
-    { word: "unilateral", meaning: "adj.單方面的" }, 
-    { word: "optimize", meaning: "v.優化" },
-    { word: "audit", meaning: "n.審計；查帳" },
-    { word: "accounting", meaning: "n.會計" },
-    { word: "budget", meaning: "n.預算" },
-    { word: "curtail", meaning: "v.縮減；削減" },
-    { word: "deficit", meaning: "n.赤字；不足額" },
-    { word: "substantially", meaning: "adv.大大地；相當多地" },
-    { word: "committee", meaning: "n.委員會" },
-    { word: "reimburse", meaning: "v.補償；核銷" },
-    { word: "allocate", meaning: "v.分配；分派" },
-    { word: "quarter", meaning: "n.季度" },
-    { word: "prompt", meaning: "v.導致；促使" },
-    { word: "deduct", meaning: "v.扣除；減除" },
-    { word: "amend", meaning: "v.修正" },
-    { word: "exempt", meaning: "adj.被免除的" },
-    { word: "deficient", meaning: "adj.不足的；缺乏的" },
-    { word: "fortunate", meaning: "adj.幸運的" },
-    { word: "expenditure", meaning: "n.支出；開支" },
-    { word: "accurately", meaning: "adv.精確地" },
-    { word: "excess", meaning: "n.超過；過量" },
-    { word: "fiscal", meaning: "adj.會計的；財政的" },
-    { word: "incidental", meaning: "adj.附帶的" },
-    { word: "inflation", meaning: "n.通貨膨脹" },
-    { word: "liable", meaning: "adj.富有責任的；很可能會~的" },
-    { word: "turnover", meaning: "n.營業額；交易額；人事異動率" },
-    { word: "foresee", meaning: "v.預見；預知" },
-    { word: "relocate", meaning: "v.搬遷(工廠等)" },
-    { word: "asset", meaning: "n.資產" },
-    { word: "dedicated", meaning: "adj.專注的；奉獻的" },
-    { word: "misplace", meaning: "v.放在想不起來的地方" },
-    { word: "considerable", meaning: "adj.相當大的；相當多的" },
-    { word: "last", meaning: "v.持續" },
-    { word: "emerge", meaning: "v.出現；浮現" },
-    { word: "imply", meaning: "v.意味著" },
-    { word: "vital", meaning: "adj.必要的" },
-    { word: "persist", meaning: "v.堅持；持續" },
-    { word: "force", meaning: "n.勢力；有影響力的人" },
-    { word: "establish", meaning: "v.創立；建立" },
-    { word: "initiate", meaning: "v.開始實施" },
-    { word: "renowned", meaning: "adj.著名的" },
-    { word: "informed", meaning: "adj.了解情況的；消息靈通的" },
-    { word: "minutes", meaning: "n.會議記錄" },
-    { word: "waive", meaning: "v.放棄；免除" },
-    { word: "authority", meaning: "n.權力；當局" },
-    { word: "acquire", meaning: "v.取得；收購" },
-    { word: "surpass", meaning: "v.超越；勝過" },
-    { word: "run", meaning: "v.經營；營運" },
-    { word: "improbable", meaning: "adj.不太可能的" },
-    { word: "edge", meaning: "n.優勢" },
-    { word: "simultaneously", meaning: "adv.同時地" },
-    { word: "premier", meaning: "adj.第一的；首要的" },
-    { word: "plant", meaning: "n.工廠" },
-    { word: "agenda", meaning: "n.議程；代辦事項" },
-    { word: "convene", meaning: "v.聚集；集會；召開" },
-    { word: "refute", meaning: "v.反駁；駁斥" },
-    { word: "coordination", meaning: "n.協調" },
-    { word: "unanimous", meaning: "adj.意見一致的" },
-    { word: "consensus", meaning: "n.共識" },
-    { word: "defer", meaning: "v.延後；延期" },
-    { word: "determine", meaning: "v.查明；判定" },
-    { word: "comment", meaning: "v.評論；發表意見" },
-    { word: "enclosed", meaning: "adj.被附上的" },
-    { word: "object", meaning: "v.反對" },
-    { word: "coincidentally", meaning: "adv.巧合的；碰巧的" },
-    { word: "undergo", meaning: "v.經歷；承受；接受" },
-    { word: "outcome", meaning: "n.結果" },
-    { word: "narrowly", meaning: "adv.勉強；好不容易；嚴格的" },
-    { word: "differ", meaning: "v.不同；不一樣" },
-    { word: "give", meaning: "v.發表；講授" },
-    { word: "emphasis", meaning: "n.強調；重點" },
-    { word: "press", meaning: "n.報刊；新聞媒體" },
-    { word: "persuasive", meaning: "adj.有說服力的" },
-    { word: "adjourn", meaning: "v.使休會；使終止；使延期" },
-    { word: "constructive", meaning: "adj.建設性的" },
-    { word: "preside", meaning: "v.主持；擔任會議主席" },
-    { word: "irrelevant", meaning: "adj.無關的；不相關的" },
-    { word: "constraint", meaning: "n.限制" },
-    { word: "condensed", meaning: "adj.簡要的；壓縮的" },
-    { word: "endorse", meaning: "v.支持；贊同；背書" },
-    { word: "punctually", meaning: "adv.如期的；不延期的" },
-    { word: "rigorous", meaning: "adj.嚴格的" },
-    { word: "meticulous", meaning: "adj.細緻的" },
-    { word: "interpret", meaning: "v.解釋" },
-    { word: "schematic", meaning: "adj.示意的n.示意圖" },
-    { word: "analytical", meaning: "adj.分析的" },
-    { word: "diagnose", meaning: "v.診斷" },
-    { word: "enthusiastic", meaning: "adj.熱情的" },
-    { word: "thrive in", meaning: "在…中茁壯成長" },
-    { word: "strength", meaning: "n.優勢" },
-    { word: "cultivate", meaning: "v.培養" },
-    /*{ word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },
-    { word: "", meaning: "" },*/
-    // 請在這裡自行擴充更多的單字...
-];
+
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1xeU9xsHju09DfkXMx7n2Z3576R9JXAjqHhVgylg8TSg/edit?usp=sharing'; 
+
+const WORD_DB_KEY = 'learningFarmWordDB';
+const FARM_STATE_KEY = 'learningFarmState';
 
 // 預設田地狀態 (5x5 = 25 塊田)
 const DEFAULT_FARM_STATE = Array(25).fill(null).map((_, index) => ({
@@ -132,16 +17,41 @@ const DEFAULT_FARM_STATE = Array(25).fill(null).map((_, index) => ({
     plantDate: null
 }));
 
-const WORD_DB_KEY = 'learningFarmWordDB';
-const FARM_STATE_KEY = 'learningFarmState';
+/**
+ * ⭐️ 新增：從網路抓取 CSV 並轉成原本 RAW_WORDS 的物件格式
+ */
+async function fetchRawWordsFromSheets() {
+    try {
+        const response = await fetch(SHEET_CSV_URL);
+        if (!response.ok) throw new Error("網路回應不正常");
+        const csvText = await response.text();
+        
+        // 解析 CSV 行
+        const rows = csvText.split('\n').filter(row => row.trim() !== '');
+        // 跳過第一行標題，轉換格式
+        const rawWords = rows.slice(1).map(row => {
+            // 處理 CSV 逗號問題 (簡單處理：用逗號分割)
+            const cols = row.split(','); 
+            return {
+                word: cols[0]?.trim() || "",
+                meaning: cols[1]?.trim() || ""
+            };
+        }).filter(w => w.word !== ""); // 過濾空行
+        
+        return rawWords;
+    } catch (e) {
+        console.error("❌ 無法抓取線上單字庫，請檢查網址或網路:", e);
+        return []; // 失敗則返回空陣列
+    }
+}
 
 // ------------------- 資料處理函數 -------------------
 
 /**
- * 根據 RAW_WORDS 建立一個帶有完整屬性的乾淨單字資料庫。
+ * 根據 rawWords 建立一個帶有完整屬性的乾淨單字資料庫。
  */
-function createDefaultWordDatabase() {
-    return RAW_WORDS.map((rawWord, index) => {
+function createDefaultWordDatabase(rawWords) {
+    return rawWords.map((rawWord, index) => {
         // 賦予單字遊戲所需的初始屬性
         return {
             id: index + 1, // 根據 RAW_WORDS 的索引自動生成 ID
@@ -162,15 +72,18 @@ function createDefaultWordDatabase() {
 function loadGameData() {
     const storedWords = localStorage.getItem(WORD_DB_KEY);
     const storedFarm = localStorage.getItem(FARM_STATE_KEY);
-
-    // 1. 取得最新且完整的預設資料庫
-    const newDefaultDB = createDefaultWordDatabase();
+    
+    // 1. 先從網路上抓取最新的單字清單
+    const fetchedRawWords = await fetchRawWordsFromSheets();
+    
+    // 2. 建立新的預設資料庫
+    const newDefaultDB = createDefaultWordDatabase(fetchedRawWords);
     
     let wordDB = newDefaultDB;
     let farmState = storedFarm ? JSON.parse(storedFarm) : DEFAULT_FARM_STATE;
     
     // 2. 如果存在舊的存檔
-    if (storedWords) {
+    if (storedWords && newDefaultDB.length > 0) {
         const storedDB = JSON.parse(storedWords);
         
         // 3. 合併邏輯：使用新的單字列表，但保留舊單字的遊戲狀態
@@ -236,4 +149,5 @@ function getTenUnlearnedWords(wordDB) {
     return selection.map(w => w.id);
 
 }
+
 
