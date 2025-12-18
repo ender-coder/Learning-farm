@@ -49,7 +49,8 @@ async function fetchRawWordsFromSheets() {
             }
             return null;
         }).filter(w => w && w.word !== "");// 過濾空行
-        
+
+        console.log("✅ 單字庫抓取成功！數量：", rawWords.length);
         return rawWords;
     } catch (e) {
         console.error("❌ 無法抓取線上單字庫，請檢查網址或網路:", e);
@@ -81,7 +82,7 @@ function createDefaultWordDatabase(rawWords) {
  * 從 localStorage 載入資料，並處理新加入的單字。
  * @returns {object} 包含 wordDB 和 farmState 的物件。
  */
-function loadGameData() {
+async function async functi() {
     const storedWords = localStorage.getItem(WORD_DB_KEY);
     const storedFarm = localStorage.getItem(FARM_STATE_KEY);
     
@@ -161,6 +162,7 @@ function getTenUnlearnedWords(wordDB) {
     return selection.map(w => w.id);
 
 }
+
 
 
 
