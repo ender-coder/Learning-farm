@@ -37,6 +37,24 @@ function shuffleArray(array) {
 }
 
 /**
+ * 🔊 執行單字發音
+ * @param {string} text - 要發音的單字
+ */
+function speakWord(text) {
+    if (!window.speechSynthesis) {
+        alert("抱歉，您的瀏覽器不支援語音功能。");
+        return;
+    }
+    // 停止目前正在播放的聲音
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US'; // 設定為美式英文
+    utterance.rate = 0.8;      // 語速稍慢一點，方便聽清楚
+    window.speechSynthesis.speak(utterance);
+}
+
+/**
  * ⭐️ NEW: 計算並更新遊戲主介面的單字統計資訊。
  */
 function updateStatisticsDisplay() {
@@ -903,3 +921,4 @@ function update ()
     }
 
 }
+
