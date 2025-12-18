@@ -4,7 +4,7 @@
 // ⭐️ 核心修改：將網址貼在下面，以後你只要改表格，遊戲就會自動更新 ⭐️
 // -------------------------------------------------------------
 
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1xeU9xsHju09DfkXMx7n2Z3576R9JXAjqHhVgylg8TSg/edit?usp=sharing'; 
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1xeU9xsHju09DfkXMx7n2Z3576R9JXAjqHhVgylg8TSg/export?format=csv'; 
 
 const WORD_DB_KEY = 'learningFarmWordDB';
 const FARM_STATE_KEY = 'learningFarmState';
@@ -22,21 +22,33 @@ const DEFAULT_FARM_STATE = Array(25).fill(null).map((_, index) => ({
  */
 async function fetchRawWordsFromSheets() {
     try {
-        const response = await fetch(SHEET_CSV_URL);
+        // 使用 cache: "no-store" 確保每次重新整理網頁都能抓到最新的試算表內容
+        const response = await fetch(SHEET_CSV_URL, { cache: "no-store" });
         if (!response.ok) throw new Error("網路回應不正常");
+
+        // 強制使用 text() 解析，fetch 預設會處理 UTF-8 編碼，解決中文亂碼問題
         const csvText = await response.text();
         
-        // 解析 CSV 行
-        const rows = csvText.split('\n').filter(row => row.trim() !== '');
-        // 跳過第一行標題，轉換格式
+        // 解析 CSV 行（考慮到 Windows 與 Mac 的換行符號不同）
+        const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== '');
+        
         const rawWords = rows.slice(1).map(row => {
-            // 處理 CSV 逗號問題 (簡單處理：用逗號分割)
-            const cols = row.split(','); 
-            return {
-                word: cols[0]?.trim() || "",
-                meaning: cols[1]?.trim() || ""
-            };
-        }).filter(w => w.word !== ""); // 過濾空行
+            /**
+             * ⭐️ 關鍵修正：處理包含逗號的中文
+             * 有些中文意思會有逗號（如：n., 取得），直接用 split(',') 會切錯。
+             * 這個正規表達式可以正確處理有引號包裹的 CSV 內容。
+             */
+            const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+            
+            if (cols && cols.length >= 2) {
+                return {
+                    // 移除可能的雙引號並清除空白
+                    word: cols[0].replace(/^"|"$/g, '').trim() || "",
+                    meaning: cols[1].replace(/^"|"$/g, '').trim() || ""
+                };
+            }
+            return null;
+        }).filter(w => w && w.word !== "");// 過濾空行
         
         return rawWords;
     } catch (e) {
@@ -149,5 +161,6 @@ function getTenUnlearnedWords(wordDB) {
     return selection.map(w => w.id);
 
 }
+
 
 
