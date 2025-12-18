@@ -645,10 +645,10 @@ function preload ()
     this.load.image('tree', 'assets/tree.png');
 }
 
-function create ()
+async function create () // ⭐️ 這裡一定要加 async
 {
-    // 1. 載入遊戲進度
-    const { wordDB, farmState } = loadGameData();
+    // 1. 載入遊戲進度 (⭐️ 這裡一定要加 await)
+    const { wordDB, farmState } = await loadGameData();
     currentWordDB = wordDB;
     currentFarmState = farmState;
     console.log("遊戲進度載入完成。已學習單字數:", currentWordDB.filter(w => w.learned).length);
@@ -901,4 +901,5 @@ function update ()
             }
         });
     }
+
 }
