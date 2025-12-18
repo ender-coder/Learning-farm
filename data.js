@@ -30,7 +30,11 @@ async function fetchRawWordsFromSheets() {
         const csvText = await response.text();
         
         // 解析 CSV 行（考慮到 Windows 與 Mac 的換行符號不同）
-        const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== '');
+        const rows = csvText.split(/\r?\n/).filter(row => {
+            const trimmed = row.trim();
+            // 跳過空行，且跳過以 # 字號開頭的行 (註解行)
+            return trimmed !== '' && !trimmed.startsWith('#') && !trimmed.startsWith('"#');
+        });
         
         const rawWords = rows.slice(1).map(row => {
             /**
@@ -162,6 +166,7 @@ function getTenUnlearnedWords(wordDB) {
     return selection.map(w => w.id);
 
 }
+
 
 
 
