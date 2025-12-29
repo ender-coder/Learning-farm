@@ -443,6 +443,7 @@ const examHtml = words.map((wordObj, index) => {
                        name="question-${wordObj.id}" 
                        data-correct-answer="${wordObj.word}"
                        autocomplete="off" // ⭐️ 關鍵修正：禁用瀏覽器自動填充
+                       spellcheck="false"  // ⭐️ 關鍵修正：防止紅字底線干擾
                        style="width: 80%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
                        required>
             </div>
@@ -967,6 +968,7 @@ function update ()
     }
 
 }
+
 
 
 
