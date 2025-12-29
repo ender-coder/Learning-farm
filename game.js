@@ -523,13 +523,16 @@ function submitFillInTheBlank(words) {
     const form = document.getElementById('exam-form');
     let totalPerfectScore = 0; // 統計完美答對的單字數量
     const results = [];
-
+    
     words.forEach(wordObj => {
         const questionElement = form.querySelector(`.exam-question[data-word-id="${wordObj.id}"]`);
         const inputField = questionElement ? questionElement.querySelector(`input[name="question-${wordObj.id}"]`) : null;
-        
-        const submittedAnswer = inputField ? inputField.value.trim().toLowerCase() : '';
-        const correctAnswer = wordObj.word.trim().toLowerCase();
+
+        // 🛠 修正比對邏輯：
+        // .trim() 去除使用者不小心輸入的頭尾空白
+        // .replace(/\s+/g, ' ') 將片語中間可能連打的兩個空白縮減為一個
+        const submittedAnswer = inputField ? inputField.value.trim().toLowerCase().replace(/\s+/g, ' ') : '';
+        const correctAnswer = wordObj.word.trim().toLowerCase().replace(/\s+/g, ' ');
         
         // 1. 取得兩種題型的結果
         let isFillInCorrect = (submittedAnswer === correctAnswer); // 填空題結果
@@ -964,6 +967,7 @@ function update ()
     }
 
 }
+
 
 
 
