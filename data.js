@@ -40,9 +40,11 @@ async function fetchRawWordsFromSheets() {
             /**
              * ⭐️ 關鍵修正：處理包含逗號的中文
              * 有些中文意思會有逗號（如：n., 取得），直接用 split(',') 會切錯。
-             * 這個正規表達式可以正確處理有引號包裹的 CSV 內容。
+             * 改用更嚴謹的 CSV 分隔邏輯。這個正則表達式會：
+             * 1. 優先抓取包含在雙引號內的內容 ("...")
+             * 2. 如果沒引號，則抓取直到遇到下一個逗號之前的「所有字元」(包含空白)
              */
-            const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+            const cols = row.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g);
             
             if (cols && cols.length >= 2) {
                 return {
