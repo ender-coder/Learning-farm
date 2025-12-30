@@ -713,28 +713,8 @@ function preload ()
 
 async function create () // ⭐️ 這裡一定要加 async
 {
-    // 1. 先定義基礎數值 (必須放在最前面，後面的繪圖才會用到)
-    const GRID_ROWS = 5;
-    const GRID_COLS = 5;
-    const CELL_SIZE = 150;
-    const START_X = 25;
-    const START_Y = 60;
-
-    /*
-    // 2. 繪製大背景草地 (最底層，填滿整個畫布)
-    // 我們可以用 tileSprite 讓一張小草地圖片重複鋪滿整個背景
-    this.add.tileSprite(0, 0, 800, 900, 'bg_grass').setOrigin(0, 0);
-    // 3. 繪製農場地基 (深色半透明矩形)
-    // 計算地基中心點：START_X + (總寬度/2)
-    const farmCenterX = START_X + (GRID_COLS * CELL_SIZE) / 2;
-    const farmCenterY = START_Y + (GRID_ROWS * CELL_SIZE) / 2;
-    this.add.rectangle(farmCenterX, farmCenterY, 
-                       GRID_COLS * CELL_SIZE + 10, 
-                       GRID_ROWS * CELL_SIZE + 10, 
-                       0x000000, 0.2);
-    */
     
-    // 4. 載入遊戲進度 (⭐️ 這裡一定要加 await)
+    // 1. 載入遊戲進度 (⭐️ 這裡一定要加 await)
     const { wordDB, farmState } = await loadGameData();
     currentWordDB = wordDB;
     currentFarmState = farmState;
@@ -742,8 +722,29 @@ async function create () // ⭐️ 這裡一定要加 async
     
     // ⭐️ NEW: 載入數據後，首次更新統計顯示
     updateStatisticsDisplay();
+    
+    // 2. 定義基礎數值 (必須放在最前面，後面的繪圖才會用到)
+    const GRID_ROWS = 5;
+    const GRID_COLS = 5;
+    const CELL_SIZE = 150;
+    const START_X = 25;
+    const START_Y = 60;
 
-    // 5. 初始化網格與繪製泥巴地塊
+    
+    // 4. 繪製大背景草地 (最底層，填滿整個畫布)
+    // 我們可以用 tileSprite 讓一張小草地圖片重複鋪滿整個背景
+    this.add.tileSprite(0, 0, 800, 900, 'bg_grass').setOrigin(0, 0);
+    // 5. 繪製農場地基 (深色半透明矩形)
+    // 計算地基中心點：START_X + (總寬度/2)
+    const farmCenterX = START_X + (GRID_COLS * CELL_SIZE) / 2;
+    const farmCenterY = START_Y + (GRID_ROWS * CELL_SIZE) / 2;
+    this.add.rectangle(farmCenterX, farmCenterY, 
+                       GRID_COLS * CELL_SIZE + 10, 
+                       GRID_ROWS * CELL_SIZE + 10, 
+                       0x000000, 0.2);
+    
+    
+    // 6. 初始化網格與繪製泥巴地塊
     this.farmPlots = []; 
     
     // 創建 Graphics 物件來繪製邊框 (除錯用)
@@ -984,6 +985,7 @@ function update ()
     }
 
 }
+
 
 
 
