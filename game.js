@@ -720,6 +720,7 @@ async function create () // ⭐️ 這裡一定要加 async
     const START_X = 25;
     const START_Y = 60;
 
+    /*
     // 2. 繪製大背景草地 (最底層，填滿整個畫布)
     // 我們可以用 tileSprite 讓一張小草地圖片重複鋪滿整個背景
     this.add.tileSprite(0, 0, 800, 900, 'bg_grass').setOrigin(0, 0);
@@ -731,6 +732,7 @@ async function create () // ⭐️ 這裡一定要加 async
                        GRID_COLS * CELL_SIZE + 10, 
                        GRID_ROWS * CELL_SIZE + 10, 
                        0x000000, 0.2);
+    */
     
     // 4. 載入遊戲進度 (⭐️ 這裡一定要加 await)
     const { wordDB, farmState } = await loadGameData();
@@ -982,6 +984,7 @@ function update ()
     }
 
 }
+
 
 
 
