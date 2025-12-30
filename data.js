@@ -29,58 +29,62 @@ async function fetchRawWordsFromSheets() {
         // 強制使用 text() 解析，fetch 預設會處理 UTF-8 編碼，解決中文亂碼問題
         const csvText = await response.text();
         
-        // 解析 CSV 行（考慮到 Windows 與 Mac 的換行符號不同）
-        const rows = csvText.split(/\r?\n/).filter(row => {
-            const trimmed = row.trim();
-            // 跳過空行，且跳過以 # 字號開頭的行 (註解行)
-            return trimmed !== '' && !trimmed.startsWith('#') && !trimmed.startsWith('"#');
-        });
+        // 分割行，保留所有內容（考慮到 Windows 與 Mac 的換行符號不同）
+        const rows = csvText.split(/\r?\n/);
         
-        const rawWords = rows.slice(1).map(row => {
-            /**
-             * ⭐️ 關鍵修正：處理包含逗號的中文
-             * 有些中文意思會有逗號（如：n., 取得），直接用 split(',') 會切錯。
-             * 改用更嚴謹的 CSV 分隔邏輯。這個正則表達式會：
-             * 1. 優先抓取包含在雙引號內的內容 ("...")
-             * 2. 如果沒引號，則抓取直到遇到下一個逗號之前的「所有字元」(包含空白)
-             */
-            const cols = row.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g);
+        // 從第一列之後開始處理 (假設第一列是標題)
+        const allRowsData = rows.slice(1).map(row => {
+            const trimmed = row.trim();
             
-            if (cols && cols.length >= 2) {
+            // 判斷是否為「有效單字行」
+            const isComment = trimmed.startsWith('#') || trimmed.startsWith('"#');
+            const isEmpty = trimmed === '';
+
+            // 使用正則拆解欄位
+            const cols = row.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
+            const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
+
+            if (!isComment && !isEmpty && cleanCols.length >= 2 && cleanCols[0] !== "") {
                 return {
-                    // 移除可能的雙引號並清除空白
-                    word: cols[0].replace(/^"|"$/g, '').trim() || "",
-                    meaning: cols[1].replace(/^"|"$/g, '').trim() || ""
+                    type: 'WORD', // 標記為單字
+                    word: cleanCols[0],
+                    meaning: cleanCols[1],
+                    rawRow: cols
+                };
+            } else {
+                return {
+                    type: 'COMMENT', // 標記為註解或空行
+                    rawRow: [row]    // 直接存下整行原始文字
                 };
             }
-            return null;
-        }).filter(w => w && w.word !== "");// 過濾空行
+        });
 
-        console.log("✅ 單字庫抓取成功！數量：", rawWords.length);
-        return rawWords;
+        console.log("✅ 原始資料抓取成功，總行數：", allRowsData.length);
+        return allRowsData;
     } catch (e) {
-        console.error("❌ 無法抓取線上單字庫，請檢查網址或網路:", e);
-        return []; // 失敗則返回空陣列
+        console.error("❌ 無法抓取線上單字庫:", e);
+        return [];
     }
 }
 
 // ------------------- 資料處理函數 -------------------
 
 /**
- * 根據 rawWords 建立一個帶有完整屬性的乾淨單字資料庫。
+ * 根據 rawRows 建立一個帶有完整屬性的乾淨單字資料庫。
  */
-function createDefaultWordDatabase(rawWords) {
-    return rawWords.map((rawWord, index) => {
-        // 賦予單字遊戲所需的初始屬性
-        return {
-            id: index + 1, // 根據 RAW_WORDS 的索引自動生成 ID
-            word: rawWord.word,
-            meaning: rawWord.meaning,
-            learned: false,
-            // 根據您的需求添加的考試追蹤屬性
-            correctCount: 0, 
-            totalAttempts: 0 
-        };
+function createDefaultWordDatabase(rawRows) {
+    let wordIdCounter = 1;
+    return rawRows.map((item) => {
+        if (item.type === 'WORD') {
+            return {
+                ...item,
+                id: wordIdCounter++, // 只有單字有 ID
+                learned: false,
+                correctCount: 0, 
+                totalAttempts: 0 
+            };
+        }
+        return item; // COMMENT 類型原樣返回
     });
 }
 
@@ -169,8 +173,57 @@ function getTenUnlearnedWords(wordDB) {
 
 }
 
+/**
+ * ⭐️ 新增：將單字標記為熟練並導出 CSV (對應原始 Excel 欄位)
+ * @param {Array<number>} wordIdsToExport - 要處理的單字 ID 列表
+ * @param {Array<object>} currentWordDB - 遊戲目前的單字資料庫
+ */
+function exportMasteredWordsToCSV(wordIdsToExport, wordDB) {
+    if (wordIdsToExport.length === 0) return;
 
+    if (!confirm(`確定要將這 ${wordIdsToExport.length} 個單字畢業並下載新的 CSV 嗎？`)) return;
 
+    const csvRows = wordDB.map(wordObj => {
+        // 如果是註解或空行，直接原樣輸出
+        if (wordObj.type === 'COMMENT') {
+            return wordObj.rawRow[0];
+        }
 
+        // 如果是單字行
+        let columns = [...(wordObj.rawRow || [])];
 
+        if (wordIdsToExport.includes(wordObj.id)) {
+            const english = wordObj.word;
+            const chinese = wordObj.meaning;
+            
+            columns[0] = ""; 
+            columns[1] = "";
 
+            let targetIdx = 2;
+            while (columns[targetIdx] && columns[targetIdx].trim() !== "" && columns[targetIdx] !== '""') {
+                targetIdx++;
+            }
+            columns[targetIdx] = `[Mastered]`;
+            columns[targetIdx+1] = english;
+            columns[targetIdx+2] = chinese;
+        }
+        
+        return columns.map(cell => {
+            let s = cell ? cell.toString().replace(/^"|"$/g, '').trim() : "";
+            return s.includes(",") ? `"${s}"` : s;
+        }).join(",");
+    });
+
+    // 重新合成 CSV (假設保留原始標題)
+    const header = "English,Chinese,Note/Archive";
+    const finalContent = "\ufeff" + [header, ...csvRows].join("\r\n");
+
+    const blob = new Blob([finalContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `farm_full_backup_${new Date().getMonth()+1}${new Date().getDate()}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
