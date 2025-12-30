@@ -37,6 +37,25 @@ function shuffleArray(array) {
 }
 
 /**
+ * 🛠 輔助函式：重設並顯示 Modal，防止舊內容殘留
+ * @param {string} title - 視窗標題
+ */
+function prepareModal(title) {
+    const modal = document.getElementById('word-modal');
+    const listContainer = document.getElementById('word-list-container');
+    const titleElement = modal.querySelector('h2');
+
+    // 1. 先清空所有舊內容
+    listContainer.innerHTML = '<p style="text-align:center; padding:20px;">載入中...</p>';
+    titleElement.textContent = title;
+    
+    // 2. 顯示視窗
+    modal.style.display = 'block';
+    
+    return listContainer;
+}
+
+/**
  * 🔊 執行單字發音
  * @param {string} text - 要發音的單字
  */
@@ -754,11 +773,16 @@ function finalExamFinish() {
 function showWordLearningWindow(wordIds, plotIndex) { // ⭐️ 新增參數 plotIndex
     const wordsToLearn = wordIds
         .map(id => currentWordDB.find(w => w.id === id))
-        .filter(w => w);
+        .filter(w => w && w.type === 'WORD'); // 確保只抓取 WORD 類型
 
-    if (wordsToLearn.length === 0) return;
+    // 檢查是否有單字
+    if (wordsToLearn.length === 0) {
+        document.getElementById('word-list-container').innerHTML = 
+            "<p style='text-align:center; padding:20px;'>此地塊的單字資料已過期或已被移除，請重新整理網頁。</p>";
+        return;
+    }
     
-    // ⭐️ NEW: 儲存當前考試狀態
+    // ⭐️ 儲存當前考試狀態
     currentPlotIndex = plotIndex;
     currentExamWordIds = wordIds;
     
@@ -770,9 +794,13 @@ function showWordLearningWindow(wordIds, plotIndex) { // ⭐️ 新增參數 plo
 function showWordReviewWindow(wordIds) { 
     const wordsToReview = wordIds
         .map(id => currentWordDB.find(w => w.id === id))
-        .filter(w => w);
+        .filter(w => w && w.type === 'WORD');
 
-    if (wordsToReview.length === 0) return;
+    if (wordsToReview.length === 0) {
+        document.getElementById('word-list-container').innerHTML = 
+            "<p style='text-align:center; padding:20px;'>找不到複習單字（可能已被移至畢業區）。</p>";
+        return;
+    }
 
     // ⭐️ NEW: 複習模式下，將 plotIndex 設為 -1
     currentPlotIndex = -1; 
