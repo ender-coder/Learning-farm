@@ -128,6 +128,119 @@ function calculatePlotMastery(wordIds) {
     return allMastered;
 }
 
+/**
+ * ⭐️ 全域畢業管理視窗 (新增自動勾選功能)
+ */
+function showGraduationManagementWindow() {
+    const modal = document.getElementById('word-modal');
+    const listContainer = document.getElementById('word-list-container');
+    const titleElement = modal.querySelector('h2');
+    
+    modal.style.display = 'block';
+    titleElement.textContent = "全域畢業單字管理 (已學習清單)";
+
+    // 撈出所有已經出題過的單字 (type === 'WORD' 且 learned 為 true)
+    const learnedWords = currentWordDB.filter(w => w.type === 'WORD' && w.learned);
+
+    if (learnedWords.length === 0) {
+        listContainer.innerHTML = "<p style='text-align:center; padding:20px;'>目前還沒有已學習的單字喔！</p>";
+        return;
+    }
+
+    // 依照正確率排序
+    learnedWords.sort((a, b) => {
+        const rateA = a.totalAttempts > 0 ? a.correctCount / a.totalAttempts : 0;
+        const rateB = b.totalAttempts > 0 ? b.correctCount / b.totalAttempts : 0;
+        return rateB - rateA;
+    });
+
+    const listHtml = learnedWords.map(wordObj => {
+        const correct = wordObj.correctCount || 0;
+        const total = wordObj.totalAttempts || 0;
+        const accuracy = total > 0 ? (correct / total * 100).toFixed(0) : '0';
+        
+        return `
+            <div class="word-row" data-accuracy="${accuracy}" style="display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; background: ${accuracy >= 80 ? '#f0fff4' : 'white'};">
+                <input type="checkbox" class="global-mastery-checkbox" data-id="${wordObj.id}" data-acc="${accuracy}" style="width: 20px; height: 20px; margin-right: 15px; cursor: pointer;">
+                <div style="flex-grow: 1;">
+                    <strong style="font-size: 1.1em; color: #007bff;">${wordObj.word}</strong> 
+                    <span style="color: #666; margin-left: 10px;">${wordObj.meaning}</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-weight: bold; color: ${accuracy >= 70 ? '#28a745' : '#dc3545'};">${accuracy}%</span>
+                    <div style="font-size: 0.7em; color: #999;">正確/嘗試: ${correct}/${total}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    listContainer.innerHTML = `
+        <div style="padding: 10px; background: #fff3cd; color: #856404; font-size: 0.9em; margin-bottom: 10px; border-radius: 5px;">
+            勾選你已經背熟的單字。點擊按鈕後，這些單字將被移至 Excel 第三欄並下載新檔案。
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button id="select-100-btn" style="flex: 1; padding: 8px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                ✅ 勾選 100% 正確
+            </button>
+            <button id="select-all-btn" style="flex: 1; padding: 8px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                ☑️ 全選所有
+            </button>
+            <button id="deselect-all-btn" style="flex: 1; padding: 8px; background: #eee; color: #333; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+                重置
+            </button>
+        </div>
+
+        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 5px;">
+            ${listHtml}
+        </div>
+
+        <button id="global-export-btn" style="
+            display: block; width: 100%; margin-top: 20px; padding: 15px; 
+            background-color: #6f42c1; color: white; border: none; 
+            border-radius: 5px; cursor: pointer; font-size: 1.1em; font-weight: bold;"
+        >
+            🎓 確認畢業勾選單字並下載 CSV
+        </button>
+    `;
+
+    // --- 事件綁定 ---
+
+    // 1. 快捷勾選：100% 正確
+    document.getElementById('select-100-btn').onclick = () => {
+        const checkboxes = document.querySelectorAll('.global-mastery-checkbox');
+        checkboxes.forEach(cb => {
+            const acc = parseInt(cb.getAttribute('data-acc'));
+            cb.checked = (acc === 100);
+        });
+    };
+
+    // 2. 快捷勾選：全選
+    document.getElementById('select-all-btn').onclick = () => {
+        const checkboxes = document.querySelectorAll('.global-mastery-checkbox');
+        checkboxes.forEach(cb => cb.checked = true);
+    };
+
+    // 3. 快捷勾選：重置
+    document.getElementById('deselect-all-btn').onclick = () => {
+        const checkboxes = document.querySelectorAll('.global-mastery-checkbox');
+        checkboxes.forEach(cb => cb.checked = false);
+    };
+
+    // 4. 下載匯出
+    document.getElementById('global-export-btn').onclick = () => {
+        const checkboxes = document.querySelectorAll('.global-mastery-checkbox:checked');
+        const ids = Array.from(checkboxes).map(cb => parseInt(cb.getAttribute('data-id')));
+        
+        if (ids.length === 0) {
+            alert("請先勾選單字！");
+            return;
+        }
+
+        exportMasteredWordsToCSV(ids, currentWordDB);
+    };
+}
+
 // -------------------------------------------------------------
 // !! 單字學習/考試 核心 UI 控制函數 !!
 // -------------------------------------------------------------
@@ -184,36 +297,45 @@ function renderLearningPage(words) {
         `;
     }).join('');
 
-    listContainer.innerHTML = listHtml;
-    
-    // 增加考試按鈕
-    listContainer.innerHTML += `
-        <button id="start-exam-btn" style="
-            display: block; 
-            margin: 20px auto; 
-            padding: 10px 20px; 
-            font-size: 1.2em; 
-            cursor: pointer; 
-            background-color: #28a745; 
-            color: white; 
-            border: none; 
-            border-radius: 5px;"
-        >
-            下一頁，開始考試 (Start Exam)
-        </button>
-    `;
+    // 2. 組合內容：清單 + 顯眼的綠色按鈕
+    listContainer.innerHTML = `
+        <div style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+            ${listHtml}
+        </div>
+        
+        <button id="start-exam-btn" style="
+            display: block; 
+            width: 100%; 
+            padding: 15px; 
+            font-size: 1.2em; 
+            font-weight: bold;
+            cursor: pointer; 
+            background-color: #28a745; 
+            color: white; 
+            border: none; 
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.1s;
+        ">
+            下一頁，開始考試 (Start Exam)
+        </button>
+    `;
 
-    document.getElementById('start-exam-btn').onclick = () => {
-        // 進入第一頁：多選題
-        renderMultipleChoiceExam(words, 'Learning'); 
-    };
+    // 綁定事件
+    document.getElementById('start-exam-btn').onclick = () => {
+        renderMultipleChoiceExam(words, 'Learning'); 
+    };
+    
+    // 增加一點點按下去的反饋效果
+    const btn = document.getElementById('start-exam-btn');
+    btn.onmousedown = () => btn.style.transform = "scale(0.98)";
+    btn.onmouseup = () => btn.style.transform = "scale(1)";
 }
 
-
 /**
- * 顯示複習頁面 (將考試入口指向多選題)
- * @param {Array<object>} words - 要複習的單字物件列表。
- */
+ * 顯示複習頁面
+ * @param {Array<object>} words - 要複習的單字物件列表。
+ */
 function renderReviewPage(words) {
     const listContainer = document.getElementById('word-list-container');
     const titleElement = document.getElementById('word-modal').querySelector('h2');
@@ -295,47 +417,48 @@ function renderReviewPage(words) {
     listContainer.innerHTML = listHtml;
     
     // 根據是否需要測驗來顯示按鈕或完成訊息
-    if (wordsForExam.length > 0) {
-        listContainer.innerHTML += `
-            <button id="start-review-exam-btn" style="
-                display: block; 
-                margin: 20px auto; 
-                padding: 10px 20px; 
-                font-size: 1.2em; 
-                cursor: pointer; 
-                background-color: #ffc107; 
-                color: #333; 
-                border: none; 
-                border-radius: 5px;"
-            >
-                開始複習測驗 (測驗 ${wordsForExam.length} 個單字)
-            </button>
-        `;
+    let finalContent = `
+        <div style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;">
+            ${listHtml}
+        </div>
+    `;
 
-        document.getElementById('start-review-exam-btn').onclick = () => {
-            // 進入第一頁：多選題
-            renderMultipleChoiceExam(wordsForExam, 'Review'); 
-        };
-    } else {
-        listContainer.innerHTML += `
-            <div style="text-align: center; margin-top: 20px; color: #28a745; font-weight: bold;">
-                🎉 太棒了！這批單字的答對率都是 100%，無需進行額外測驗。
-            </div>
-            <button onclick="document.getElementById('word-modal').style.display = 'none';" style="
-                display: block; 
-                margin: 20px auto 10px; 
-                padding: 10px 20px; 
-                font-size: 1.2em; 
-                cursor: pointer; 
-                background-color: #6c757d; 
-                color: white; 
-                border: none; 
-                border-radius: 5px;"
-            >
-                關閉
-            </button>
-        `;
-    }
+    if (wordsForExam.length > 0) {
+        finalContent += `
+            <button id="start-review-exam-btn" style="
+                display: block; 
+                width: 100%; 
+                padding: 15px; 
+                font-size: 1.2em; 
+                font-weight: bold;
+                cursor: pointer; 
+                background-color: #ffc107; 
+                color: #333; 
+                border: none; 
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            ">
+                開始複習測驗 (測驗 ${wordsForExam.length} 個單字)
+            </button>
+        `;
+    } else {
+        finalContent += `
+            <div style="text-align: center; margin: 20px 0; color: #28a745; font-weight: bold; font-size: 1.1em;">
+                🎉 太棒了！此區域單字已全部掌握。
+            </div>
+            <button onclick="document.getElementById('word-modal').style.display = 'none';" style="
+                display: block; width: 100%; padding: 12px; background-color: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer;
+            ">關閉</button>
+        `;
+    }
+
+    listContainer.innerHTML = finalContent;
+
+    // 綁定測驗按鈕事件
+    const reviewBtn = document.getElementById('start-review-exam-btn');
+    if (reviewBtn) {
+        reviewBtn.onclick = () => renderMultipleChoiceExam(wordsForExam, 'Review');
+    }
 }
 
 
@@ -451,23 +574,26 @@ const examHtml = words.map((wordObj, index) => {
     }).join('');
 
     listContainer.innerHTML = `
-        <form id="exam-form" data-exam-type="fill-in-the-blank">
-            ${examHtml}
-            <button type="submit" style="
-                display: block; 
-                margin: 30px auto 10px; 
-                padding: 10px 20px; 
-                font-size: 1.2em; 
-                cursor: pointer; 
-                background-color: #dc3545; 
-                color: white; 
-                border: none; 
-                border-radius: 5px;"
-            >
-                提交所有答案並完成 (Submit All)
-            </button>
-        </form>
-    `;
+        <form id="exam-form" data-exam-type="fill-in-the-blank">
+            ${examHtml}
+            <button type="submit" style="
+                display: block; 
+                width: 100%;
+                margin: 30px auto 10px; 
+                padding: 15px; 
+                font-size: 1.2em; 
+                cursor: pointer; 
+                background-color: #dc3545; 
+                color: white; 
+                border: none; 
+                border-radius: 8px;
+                font-weight: bold;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            ">
+                提交所有答案並完成 (Submit All)
+            </button>
+        </form>
+    `;
 
     // 綁定提交事件
     document.getElementById('exam-form').onsubmit = (e) => {
@@ -630,19 +756,6 @@ function finalExamFinish() {
 }
 
 // -------------------------------------------------------------
-// !! 遊戲主體入口函數 & Phaser 遊戲主體 (保持不變) !!
-// -------------------------------------------------------------
-// ... (所有 showWordLearningWindow, showWordReviewWindow, Phaser 部分保持不變) ...
-
-// 這裡附上原 submitExam 之後的程式碼，確保是完整的 game.js
-function submitExam(words) {
-    // 原始的 submitExam 函數現在已經過時，被 submitMultipleChoice 和 submitFillInTheBlank 取代。
-    // 如果您在檔案中還有這個函數，請刪除它，或使用上面的新函數。
-    // 為了保持程式碼結構清晰，我們不再需要這個舊函數。
-}
-
-
-// -------------------------------------------------------------
 // !! 遊戲主體入口函數 !!
 // -------------------------------------------------------------
 
@@ -792,7 +905,27 @@ async function create ()
     .setOrigin(0.5)
     .setInteractive() 
     .on('pointerdown', clearGameData); 
-
+    
+    // ------------------------------------------------
+    // ⭐️ 新增：畢業管理按鈕
+    // ------------------------------------------------
+    const manageButton = this.add.text(
+        650, // 放置在右上方
+        20, 
+        '🎓 畢業單字管理', 
+        { 
+            fontSize: '20px', 
+            fill: '#ffffff', 
+            backgroundColor: '#6f42c1', // 紫色按鈕
+            padding: { x: 10, y: 5 }
+        }
+    )
+    .setOrigin(0.5)
+    .setInteractive() 
+    .on('pointerdown', () => {
+        showGraduationManagementWindow();
+    });
+    
     // ------------------------------------------------
     // ⭐️ 修正單字彈窗的 X 關閉按鈕 ⭐️
     // ------------------------------------------------
