@@ -705,38 +705,43 @@ const game = new Phaser.Game(config);
 
 function preload ()
 {
-    this.load.image('grass', 'assets/grass.png');
+    this.load.image('bg_grass', 'assets/grass.png'); // 拼接小草皮
+    this.load.image('dirt', 'assets/dirt.png');      // 格子用的泥巴地
     this.load.image('seedling', 'assets/seedling.png'); 
     this.load.image('tree', 'assets/tree.png');
 }
 
-async function create () // ⭐️ 這裡一定要加 async
+async function create () 
 {
-    // 1. 載入遊戲進度 (⭐️ 這裡一定要加 await)
+    // 定義基礎數值
+    const GRID_ROWS = 5;
+    const GRID_COLS = 5;
+    const CELL_SIZE = 150;
+    const START_X = 25;
+    const START_Y = 60;
+
+    // 背景拼接
+    // 使用 tileSprite(x, y, width, height, key)
+    // Origin(0,0) 表示從左上角開始鋪，鋪滿整個 800x900 的畫布
+    const bg = this.add.tileSprite(0, 0, 800, 900, 'bg_grass').setOrigin(0, 0);
+    
+    // 整拼接圖的縮放比例
+    // 如果圖片太大，請嘗試 0.01 或 0.05；如果太小，請嘗試 0.5 或 1.0
+    // 例如 0.5 代表將原圖壓縮成 50% 的大小後再進行拼接
+    bg.setTileScale(0.1, 0.1);
+
+    // 3. 載入資料
     const { wordDB, farmState } = await loadGameData();
     currentWordDB = wordDB;
     currentFarmState = farmState;
-    console.log("遊戲進度載入完成。已學習單字數:", currentWordDB.filter(w => w.learned).length);
-    
-    // ⭐️ NEW: 載入數據後，首次更新統計顯示
     updateStatisticsDisplay();
-    
-    // 定義網格參數
-    const GRID_ROWS = 5;  
-    const GRID_COLS = 5;  
-    const CELL_SIZE = 150;
-    const START_X = 25;   
-    const START_Y = 60; 
-    
+
+    // 4. 初始化網格
     this.farmPlots = []; 
+    const graphics = this.add.graphics({ lineStyle: { width: 2, color: 0x654321, alpha: 0.3 } });
 
-    // 創建 Graphics 物件來繪製邊框 (除錯用)
-    const graphics = this.add.graphics({ lineStyle: { width: 4, color: 0xff0000, alpha: 1 } });
-
-    // 雙層迴圈建立 5x5 的網格
     for (let row = 0; row < GRID_ROWS; row++) {
         for (let col = 0; col < GRID_COLS; col++) {
-            
             const plotIndex = row * GRID_COLS + col;
             
             // 資料防禦
@@ -746,43 +751,26 @@ async function create () // ⭐️ 這裡一定要加 async
             }
             const plotState = currentFarmState[plotIndex]; 
 
-            // 計算中心位置
             const x = START_X + col * CELL_SIZE + (CELL_SIZE / 2);
             const y = START_Y + row * CELL_SIZE + (CELL_SIZE / 2);
 
-            // 1. 繪製田地塊 (根據狀態決定初始圖片)
-            let textureKey = 'grass';
-            if (plotState.isPlanted) {
-                // 🏆 MODIFIED: 直接呼叫檢查函數
-                const isMastered = calculatePlotMastery(plotState.wordIds); 
-                if (isMastered) { // 🏆 檢查是否為 true
-                    textureKey = 'tree'; // 熟練度足夠，顯示樹
-                } else {
-                    textureKey = 'seedling'; // 熟練度不足，顯示樹苗
-                }
-            }
+            // 決定紋理：空地一律用 'dirt'
+            let textureKey = 'dirt';
+            if (plotState.isPlanted) {
+                const isMastered = calculatePlotMastery(plotState.wordIds); 
+                textureKey = isMastered ? 'tree' : 'seedling';
+            }
+
+            // 放置地塊 (泥巴地/種子/樹)
             const plot = this.add.image(x, y, textureKey);
             plot.displayWidth = CELL_SIZE;
             plot.displayHeight = CELL_SIZE;
-            
-            // 所有數據直接附加到 plot 物件上
             plot.isPlanted = plotState.isPlanted; 
             plot.wordIds = plotState.wordIds || [];
             plot.customRow = row; 
             plot.customCol = col; 
             plot.customIndex = plotIndex; 
-            
-            // ⭐️ NEW: 增加一個 masterd 屬性來追蹤狀態
             plot.isMastered = (textureKey === 'tree');
-            
-            // 繪製邊框
-            graphics.strokeRect(
-                x - (CELL_SIZE / 2),
-                y - (CELL_SIZE / 2),
-                CELL_SIZE,
-                CELL_SIZE
-            );
-            
             this.farmPlots.push(plot);
         }
     }
@@ -820,7 +808,7 @@ async function create () // ⭐️ 這裡一定要加 async
                 if (plot && plot.isPlanted && plot.texture.key === 'seedling') {
                     
                     // 1. 重設地塊視覺
-                    plot.setTexture('grass');
+                    plot.setTexture('dirt');
                     plot.isPlanted = false;
                     plot.wordIds = [];
 
