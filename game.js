@@ -705,13 +705,20 @@ const game = new Phaser.Game(config);
 
 function preload ()
 {
-    this.load.image('grass', 'assets/grass.png');
+    this.load.image('bg_grass', 'assets/grass.png');
+    this.load.image('dirt', 'assets/dirt.png');
     this.load.image('seedling', 'assets/seedling.png'); 
     this.load.image('tree', 'assets/tree.png');
 }
 
 async function create () // ⭐️ 這裡一定要加 async
 {
+    // 0. 加入大背景草地 (填滿整個畫布)
+    // 我們可以用 tileSprite 讓一張小草地圖片重複鋪滿整個背景
+    this.add.tileSprite(0, 0, 800, 900, 'bg_grass').setOrigin(0, 0);
+    // 稍微大一點的深色半透明矩形在網格區域下方，當作農地的地基
+    this.add.rectangle(START_X + (5 * CELL_SIZE / 2), START_Y + (5 * CELL_SIZE / 2), 5 * CELL_SIZE + 10, 5 * CELL_SIZE + 10, 0x000000, 0.2);
+    
     // 1. 載入遊戲進度 (⭐️ 這裡一定要加 await)
     const { wordDB, farmState } = await loadGameData();
     currentWordDB = wordDB;
@@ -751,7 +758,7 @@ async function create () // ⭐️ 這裡一定要加 async
             const y = START_Y + row * CELL_SIZE + (CELL_SIZE / 2);
 
             // 1. 繪製田地塊 (根據狀態決定初始圖片)
-            let textureKey = 'grass';
+            let textureKey = 'dirt';
             if (plotState.isPlanted) {
                 // 🏆 MODIFIED: 直接呼叫檢查函數
                 const isMastered = calculatePlotMastery(plotState.wordIds); 
@@ -820,7 +827,7 @@ async function create () // ⭐️ 這裡一定要加 async
                 if (plot && plot.isPlanted && plot.texture.key === 'seedling') {
                     
                     // 1. 重設地塊視覺
-                    plot.setTexture('grass');
+                    plot.setTexture('dirt');
                     plot.isPlanted = false;
                     plot.wordIds = [];
 
@@ -968,6 +975,7 @@ function update ()
     }
 
 }
+
 
 
 
