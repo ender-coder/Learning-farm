@@ -63,18 +63,21 @@ function speakWord(text) {
  */
 function updateStatisticsDisplay() {
     if (!currentWordDB) return;
-
+    
+    // ⭐️ 修正：過濾掉註解與空行，只計算真正的單字
+    const allWords = currentWordDB.filter(w => w.type === 'WORD');
+    
     // 總單字數
-    const totalWords = currentWordDB.length;
-
+    const totalWords = allWords.length;
+    
     // 已出題數 (已經歷學習階段，即 learned = true)
-    const learnedWords = currentWordDB.filter(w => w.learned).length;
-
+    const learnedWords = allWords.filter(w => w.learned).length;
+    
     // 未出題數 (尚未進入學習階段，即 learned = false)
     const unlearnedWords = totalWords - learnedWords;
-
+    
     // 需複習單字數 (答對率 < 100% 且嘗試次數 > 0)
-    const needReviewWords = currentWordDB.filter(w => {
+    const needReviewWords = allWords.filter(w => {
         const correct = w.correctCount || 0;
         const total = w.totalAttempts || 0;
         return w.learned && total > 0 && correct < total;
@@ -626,17 +629,6 @@ function submitMultipleChoice(words) {
         // 儲存多選題結果
         multipleChoiceResults[wordObj.id] = isCorrect;
 
-        // 🏆 REMOVED: 刪除原本在這裡的計分邏輯！
-        /*
-        const globalWord = currentWordDB.find(w => w.id === wordObj.id);
-        if (globalWord) {
-            globalWord.totalAttempts = (globalWord.totalAttempts || 0) + 1;
-            if (isCorrect) {
-                globalWord.correctCount = (globalWord.correctCount || 0) + 1;
-                correctIds.push(wordObj.id);
-            }
-        }
-        */
     });
     
     return correctIds;
