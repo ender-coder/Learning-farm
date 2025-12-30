@@ -705,15 +705,13 @@ const game = new Phaser.Game(config);
 
 function preload ()
 {
-    this.load.image('bg_grass', 'assets/grass.png');
-    this.load.image('dirt', 'assets/dirt.png');
+    this.load.image('grass', 'assets/grass.png');
     this.load.image('seedling', 'assets/seedling.png'); 
     this.load.image('tree', 'assets/tree.png');
 }
 
 async function create () // ⭐️ 這裡一定要加 async
 {
-    
     // 1. 載入遊戲進度 (⭐️ 這裡一定要加 await)
     const { wordDB, farmState } = await loadGameData();
     currentWordDB = wordDB;
@@ -723,32 +721,17 @@ async function create () // ⭐️ 這裡一定要加 async
     // ⭐️ NEW: 載入數據後，首次更新統計顯示
     updateStatisticsDisplay();
     
-    // 2. 定義基礎數值 (必須放在最前面，後面的繪圖才會用到)
-    const GRID_ROWS = 5;
-    const GRID_COLS = 5;
+    // 定義網格參數
+    const GRID_ROWS = 5;  
+    const GRID_COLS = 5;  
     const CELL_SIZE = 150;
-    const START_X = 25;
-    const START_Y = 60;
-
+    const START_X = 25;   
+    const START_Y = 60; 
     
-    // 4. 繪製大背景草地 (最底層，填滿整個畫布)
-    // 我們可以用 tileSprite 讓一張小草地圖片重複鋪滿整個背景
-    this.add.tileSprite(0, 0, 800, 900, 'bg_grass').setOrigin(0, 0);
-    // 5. 繪製農場地基 (深色半透明矩形)
-    // 計算地基中心點：START_X + (總寬度/2)
-    const farmCenterX = START_X + (GRID_COLS * CELL_SIZE) / 2;
-    const farmCenterY = START_Y + (GRID_ROWS * CELL_SIZE) / 2;
-    this.add.rectangle(farmCenterX, farmCenterY, 
-                       GRID_COLS * CELL_SIZE + 10, 
-                       GRID_ROWS * CELL_SIZE + 10, 
-                       0x000000, 0.2);
-    
-    
-    // 6. 初始化網格與繪製泥巴地塊
     this.farmPlots = []; 
-    
+
     // 創建 Graphics 物件來繪製邊框 (除錯用)
-    const graphics = this.add.graphics({ lineStyle: { width: 4, color: 0x654321, alpha: 0.3 } });
+    const graphics = this.add.graphics({ lineStyle: { width: 4, color: 0xff0000, alpha: 1 } });
 
     // 雙層迴圈建立 5x5 的網格
     for (let row = 0; row < GRID_ROWS; row++) {
@@ -768,7 +751,7 @@ async function create () // ⭐️ 這裡一定要加 async
             const y = START_Y + row * CELL_SIZE + (CELL_SIZE / 2);
 
             // 1. 繪製田地塊 (根據狀態決定初始圖片)
-            let textureKey = 'dirt';
+            let textureKey = 'grass';
             if (plotState.isPlanted) {
                 // 🏆 MODIFIED: 直接呼叫檢查函數
                 const isMastered = calculatePlotMastery(plotState.wordIds); 
@@ -837,7 +820,7 @@ async function create () // ⭐️ 這裡一定要加 async
                 if (plot && plot.isPlanted && plot.texture.key === 'seedling') {
                     
                     // 1. 重設地塊視覺
-                    plot.setTexture('dirt');
+                    plot.setTexture('grass');
                     plot.isPlanted = false;
                     plot.wordIds = [];
 
@@ -985,12 +968,3 @@ function update ()
     }
 
 }
-
-
-
-
-
-
-
-
-
