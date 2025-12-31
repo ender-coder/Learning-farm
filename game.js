@@ -495,7 +495,7 @@ const listContainer = document.getElementById('word-list-container');
     
     titleElement.textContent = `測驗 I: 選出中文 (共 ${words.length} 題)`;
 
-    const allMeanings = currentWordDB.map(w => w.meaning); 
+    const allMeanings = currentWordDB.filter(w => w.type === 'WORD').map(w => w.meaning);
     
     const examHtml = words.map((wordObj, index) => {
         let options = [{ meaning: wordObj.meaning, isCorrect: true }];
@@ -923,11 +923,17 @@ async function create ()
         }
     )
     .setOrigin(0.5)
-    .setInteractive() 
-    .on('pointerdown', clearGameData); 
+    .setInteractive({ useHandCursor: true }) // 加上小手指標
+    .on('pointerdown', () => {
+        // 核心防禦：如果表單開著，不准點擊
+        const modal = document.getElementById('word-modal');
+        if (modal && modal.style.display !== 'none' && modal.style.display !== '') return;
+        
+        clearGameData();
+    });
     
     // ------------------------------------------------
-    // ⭐️ 新增：畢業管理按鈕
+    // ⭐️ 畢業管理按鈕
     // ------------------------------------------------
     const manageButton = this.add.text(
         650, // 放置在右上方
@@ -941,8 +947,14 @@ async function create ()
         }
     )
     .setOrigin(0.5)
-    .setInteractive() 
+    .setInteractive({ useHandCursor: true })
     .on('pointerdown', () => {
+        // 核心防禦：如果表單開著，不准重複開啟
+        const modal = document.getElementById('word-modal');
+        if (modal && modal.style.display === 'block') return;
+        
+        // 💡 開啟前先禁用遊戲輸入
+        setGameInputActive(false);
         showGraduationManagementWindow();
     });
     
@@ -952,9 +964,19 @@ async function create ()
     const modal = document.getElementById('word-modal');
     const closeButton = document.getElementById('modal-close');
     
+	// 建立一個輔助函數來控制遊戲輸入
+    const setGameInputActive = (active) => {
+        // 控制清除與畢業按鈕的互動
+        clearButton.setInteractive();   // 恢復可點擊
+        manageButton.setInteractive();  // 恢復可點擊
+        this.input.enabled = true;      // 恢復地塊偵測
+    };
+	
     if (modal && closeButton) {
         const resetPlotOnExit = () => { // ⭐️ 提取重設邏輯
             modal.style.display = 'none';
+            setGameInputActive(true); // ⭐️ 關閉彈窗，恢復遊戲點擊
+            
             // 只有在「學習」模式下，且中途退出時才重設地塊
             if (currentPlotIndex !== -1) {
                 const plot = this.farmPlots[currentPlotIndex];
@@ -983,14 +1005,8 @@ async function create ()
                 currentExamWordIds = [];
             }
         }
-
         closeButton.onclick = resetPlotOnExit; // 關閉按鈕使用重設邏輯
         
-        /*window.onclick = function(event) {
-            if (event.target == modal) {
-                resetPlotOnExit(); // 點擊背景使用重設邏輯
-            }
-        }*/
     } else {
         console.warn("警告：未找到 #word-modal 或 #modal-close 元素。請確認 index.html 檔案是否正確。");
     }
@@ -1004,18 +1020,13 @@ async function create ()
     
     this.input.on('pointerdown', (pointer) => {
         
-        // 核心防禦：如果 Modal 正在顯示，則不處理點擊事件
-        if (document.getElementById('word-modal') && document.getElementById('word-modal').style.display === 'block') {
-            return;
-        }
+        // 核心防禦：如果 Modal 正在顯示，則不處理點擊事件，我們保留這行作為雙重保險
+        if (modal && modal.style.display === 'block') return;
 
-        // 忽略點擊清除按鈕
-        if (clearButton.input.hitArea.contains(pointer.x, pointer.y)) {
-             return; 
-        }
+		// 檢查是否點到按鈕，避免點按鈕時觸發地塊種植
+        // 在 Phaser 裡 pointerover 是更準確的判斷，這裡用簡易判斷：
+        if (pointer.y < 60) return; 
 
-        testText.setText(`點擊測試: X=${Math.round(pointer.x)}, Y=${Math.round(pointer.y)}`);
-        
         let plotClicked = null;
         let clickedIndex = -1;
 
@@ -1038,6 +1049,9 @@ async function create ()
         }
 
         if (plotClicked) {
+        	// ⭐️ 開啟視窗前，禁用遊戲輸入
+            setGameInputActive(false);
+            
             if (!plotClicked.isPlanted) {
                 // ⭐️ 種植邏輯
 
@@ -1046,6 +1060,7 @@ async function create ()
                 if (unlearnedWordsCount === 0) {
                     alert("你沒有種子單字了！請匯入新的單字清單或等待下一批單字。");
                     updateStatisticsDisplay(); // 確保統計數據是最新的
+                    setGameInputActive(true); // 彈窗失敗要復原輸入
                     return; // 提前退出，不進行種植
                 }
 
@@ -1055,6 +1070,7 @@ async function create ()
                 if (newWordIds.length === 0) {
                     alert("你沒有種子單字了！請匯入新的單字清單或等待下一批單字。");
                     updateStatisticsDisplay();
+                    setGameInputActive(true); // 彈窗失敗要復原輸入
                     return; // 提前退出
                 }
                 
