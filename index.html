@@ -4,12 +4,13 @@
     <meta charset="utf-8">
     <title>英文單字學習農場 (Learning Farm)</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #333; }
+        body { margin: 0; padding: 0; background-color: #333; overflow-y: auto;}
         #game-container {
-            /* 確保容器可以擴展到最大寬度 */
-            max-width: 100%; 
-            /* 讓容器居中 */
-            margin: 0 auto; 
+            max-width: 100%; /* 確保容器可以擴展到最大寬度 */
+            margin: 0 auto; /* 讓容器居中 */
+			height: auto;
+            min-height: 900px; /* 至少維持一個遊戲畫面的高度 */
+            background-color: #000; /* 沒填滿時的底色 */
             /* 建議為遊戲畫面留一些空間，例如： */
             /* width: 800px;  - 這是 Phsaer 的設計寬度 */
             /* height: 900px; - 這是 Phsaer 的設計高度 */
@@ -77,4 +78,5 @@
     
     <script src="game.js"></script>
 </body>
+
 </html>
