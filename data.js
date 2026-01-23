@@ -26,40 +26,47 @@ async function fetchRawWordsFromSheets() {
         const response = await fetch(SHEET_CSV_URL, { cache: "no-store" });
         if (!response.ok) throw new Error("網路回應不正常");
 
-        // 強制使用 text() 解析，fetch 預設會處理 UTF-8 編碼，解決中文亂碼問題
+        // 強制使用 text() 解析，處理 UTF-8 編碼
         const csvText = await response.text();
         
-        // 分割行，保留所有內容（考慮到 Windows 與 Mac 的換行符號不同）
+        // 分割行 (考慮到 Windows 與 Mac 的換行符號不同)
         const rows = csvText.split(/\r?\n/);
         
         // 從第一列之後開始處理 (假設第一列是標題)
-        const allRowsData = rows.slice(1).map(row => {
-            const trimmed = row.trim();
+        const allRowsData = rows.slice(1).map((row, index) => {
+            const trimmedRow = row.trim();
+            if (!trimmedRow) return { type: 'COMMENT', rawRow: [""] };
             
-            // 判斷是否為「有效單字行」
-            const isComment = trimmed.startsWith('#') || trimmed.startsWith('"#');
-            const isEmpty = trimmed === '';
+            // 1. 使用正則拆解 CSV 欄位，處理包含逗號的引號字串
+            // 這個正則會將 "Apple, Red", Fruit 拆分為 ["Apple, Red", "Fruit"]
+            const cols = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
 
-            // 使用正則拆解欄位
-            const cols = row.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g) || [];
-            const cleanCols = cols.map(c => c.replace(/^"|"$/g, '').trim());
+            // 2. 定義「有效單字」的嚴格條件：
+            // 🏆 關鍵修正：只有當第一欄跟第二欄同時有值時，才視為單字
+            // 這樣你在第三欄寫東西，前兩欄空著，就會被判定為 COMMENT
+            const isPoundComment = trimmedRow.startsWith('#') || trimmedRow.startsWith('"#');
+            const english = cols[0] || ""; // 防止第二欄沒填導致錯誤
+            const chinese = cols[1] || ""; // 防止第二欄沒填導致錯誤
 
-            if (!isComment && !isEmpty && cleanCols.length >= 2 && cleanCols[0] !== "") {
+            if (english !== "" && chinese !== "" && !isPoundComment) {
+                // ✅ 合法的單字行
                 return {
-                    type: 'WORD', // 標記為單字
-                    word: cleanCols[0],
-                    meaning: cleanCols[1],
-                    rawRow: cols
+                    type: 'WORD',
+                    id: `sheet-${index}`, // 給予唯一 ID 方便追蹤
+                    word: english,
+                    meaning: chinese,
+                    rawRow: cols // 儲存原始拆分結果，供匯出使用
                 };
             } else {
+                // ❌ 註解行、空行、或第一格沒寫單字的行
                 return {
-                    type: 'COMMENT', // 標記為註解或空行
-                    rawRow: [row]    // 直接存下整行原始文字
+                    type: 'COMMENT',
+                    rawRow: [row] // 直接存下整行原始字串，確保匯出時格式不變
                 };
             }
         });
 
-        console.log("✅ 原始資料抓取成功，總行數：", allRowsData.length);
+        console.log("✅ 原始資料抓取成功，有效單字與註解總數：", allRowsData.length);
         return allRowsData;
     } catch (e) {
         console.error("❌ 無法抓取線上單字庫:", e);
