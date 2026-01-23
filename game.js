@@ -92,8 +92,13 @@ function updateStatisticsDisplay() {
     // 已出題數 (已經歷學習階段，即 learned = true)
     const learnedWords = allWords.filter(w => w.learned).length;
     
-    // 未出題數 (尚未進入學習階段，即 learned = false)
-    const unlearnedWords = totalWords - learnedWords;
+    // 未出題數 (尚未進入學習階段，即 learned = false，嚴格過濾掉 COMMENT 類型)
+    const unlearnedWords = currentWordDB.filter(w => 
+        w.type === 'WORD' &&  // 必須是單字類型
+        !w.learned &&         // 必須未學習
+        w.word &&             // 確保有單字內容
+        w.word.trim() !== ""
+    ).length;
     
     // 需複習單字數 (答對率 < 100% 且嘗試次數 > 0)
     const needReviewWords = allWords.filter(w => {
@@ -1055,18 +1060,22 @@ async function create ()
             if (!plotClicked.isPlanted) {
                 // ⭐️ 種植邏輯
 
-                // 🏆 關鍵修正 A: 檢查是否有未學習單字
-                const unlearnedWordsCount = currentWordDB.filter(w => !w.learned).length;
+                // 🏆 關鍵修正 A: 檢查是否有未學習單字 (排除註解與空行)
+                const availableWords = currentWordDB.filter(w => w.type === 'WORD' && !w.learned);
+                const unlearnedWordsCount = availableWords.length;
+	            
                 if (unlearnedWordsCount === 0) {
                     alert("你沒有種子單字了！請匯入新的單字清單或等待下一批單字。");
                     updateStatisticsDisplay(); // 確保統計數據是最新的
                     setGameInputActive(true); // 彈窗失敗要復原輸入
                     return; // 提前退出，不進行種植
                 }
-
-                const newWordIds = getTenUnlearnedWords(currentWordDB);
                 
                 // 🏆 關鍵修正 B: 再次檢查，如果單字數量不足 10 個，也給予提示並退出。
+                const shuffled = shuffleArray([...availableWords]);
+                const selectedWords = shuffled.slice(0, 10);
+                const newWordIds = selectedWords.map(w => w.id);
+                
                 if (newWordIds.length === 0) {
                     alert("你沒有種子單字了！請匯入新的單字清單或等待下一批單字。");
                     updateStatisticsDisplay();
