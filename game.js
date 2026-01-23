@@ -823,7 +823,7 @@ function showWordReviewWindow(wordIds) {
 const config = {
     type: Phaser.AUTO,
     width: 800,
-    height: 900,
+    height: 1600,
     parent: 'game-container',
     debug: true, 
     scene: {
@@ -833,7 +833,7 @@ const config = {
     },
     // ⭐️ 關鍵新增：Phaser 縮放配置 ⭐️
     scale: {
-        mode: Phaser.Scale.FIT, // 讓遊戲畫面按比例縮放以適應容器
+        mode: Phaser.Scale.RESIZE, // 讓遊戲畫面按比例縮放以適應容器
         autoCenter: Phaser.Scale.CENTER_BOTH, // 讓遊戲畫面在容器中水平和垂直居中
         parent: 'game-container' // 再次指定容器 ID
     }
@@ -852,7 +852,7 @@ function preload ()
 async function create () 
 {
     // 定義基礎數值
-    const GRID_ROWS = 5;
+    const GRID_ROWS = 10;
     const GRID_COLS = 5;
     const CELL_SIZE = 150;
     const START_X = 25;
@@ -860,8 +860,8 @@ async function create ()
 
     // 背景拼接
     // 使用 tileSprite(x, y, width, height, key)
-    // Origin(0,0) 表示從左上角開始鋪，鋪滿整個 800x900 的畫布
-    const bg = this.add.tileSprite(0, 0, 800, 900, 'bg_grass').setOrigin(0, 0);
+    // Origin(0,0) 表示從左上角開始鋪，鋪滿整個 800x1600 的畫布
+    const bg = this.add.tileSprite(0, 0, 800, 1600, 'bg_grass').setOrigin(0, 0);
     
     // 整拼接圖的縮放比例
     // 如果圖片太大，請嘗試 0.01 或 0.05；如果太小，請嘗試 0.5 或 1.0
